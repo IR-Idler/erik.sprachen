@@ -230,6 +230,7 @@ transform: translateY(-4px);
     background: #fbfaf3;
     box-shadow:
         0 8px 18px rgba(0,0,0,.18);
+    backdrop-filter: blur(3px);
 }
 
 .contact-link:hover svg{
@@ -263,6 +264,7 @@ fill: var(--bg-deep);
   background: var(--cream);
   border-radius: 14px;
   box-shadow: 0 10px 28px rgba(0,0,0,0.28);
+  backdrop-filter: blur(3px);
   overflow: hidden;
   z-index: 30;
 
@@ -355,6 +357,8 @@ font-family: var(--font-cjk);
 font-size: 1.05rem;
 max-width: 590px;
 color: var(--cream);
+text-align: justify;
+text-justify: inter-ideograph;
 }
 
 .teaching-quote{
@@ -368,7 +372,7 @@ color: var(--cream);
     font-family: var(--font-cjk);
     font-size: 1.25rem;
     font-weight: 500;
-    line-height: 1.7;
+    line-height: 1.8;
 
     color: var(--gold);
 }
