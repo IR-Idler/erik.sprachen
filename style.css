@@ -493,3 +493,17 @@ background: var(--gold);
 }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.hero-inner {
+  animation: fadeIn 0.8s ease;
+}
+
