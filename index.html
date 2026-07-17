@@ -26,7 +26,7 @@
       <div class="profile">
 
         <div class="photo">
-          <img src="img/erik.png" alt="Erik Gundermann">
+          <img id="profile-img" src="img/erik_medium.png" alt="Erik Gundermann">
         </div>
 
         <h2 class="name">Erik Gundermann</h2>
@@ -184,6 +184,14 @@
 
         });
 
+        const img = document.getElementById('profile-img');
+        if (img) {
+            const highRes = new Image();
+            highRes.src = 'img/erik.png';
+            highRes.onload = () => {
+                img.src = highRes.src;
+            };
+        }
     });
   </script>
 
