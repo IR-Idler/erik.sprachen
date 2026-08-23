@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>德語 CEFR 程度分級測驗 | 柯艾瑞 Erik Gundermann</title>
+  <meta name="description" content="完完整 10 分鐘德語能力適性檢測，涵蓋文法、詞彙與閱讀理解，精準分析你的德文 CEFR 等級（A1-C1）。">
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="index.html" class="logo" style="text-decoration: none; color: inherit;">柯艾瑞</a>
+    <nav class="top-nav">
+      <a href="index.html" class="nav-quiz-btn">返回首頁</a>
+    </nav>
+  </header>
+
+  <main class="hero quiz-hero-wrapper">
+    <div class="bg-shapes" aria-hidden="true"></div>
+
+    <div class="quiz-card" id="quiz-card">
+      
+      <!-- SCREEN 1: START -->
+      <div id="start-screen">
+        <span class="quiz-badge">德語適性分級測驗 (Adaptive Test)</span>
+        <h1 class="quiz-main-title">檢測你的德文 CEFR 等級</h1>
+        <p class="quiz-intro-text">
+          本測驗包含 <strong>18 道題目</strong>（約需 10 分鐘），涵蓋<strong>文法、詞彙與閱讀理解</strong>。<br>
+          題目難度會根據你的答題狀況自動調整（A1–C1），放輕鬆作答即可，測驗結束後將立即為你顯示程度解析與專屬學習方向！
+        </p>
+        <button class="btn-quiz" onclick="startQuiz()">開始測驗</button>
+      </div>
+
+      <!-- SCREEN 2: QUIZ INTERFACE -->
+      <div id="quiz-screen" class="hidden">
+        <div class="quiz-meta-bar">
+          <span id="question-number">第 1 題 / 共 18 題</span>
+          <span class="timer-badge" id="timer-display">10:00</span>
+        </div>
+        
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        
+        <div class="level-indicator" id="level-tag">載入中...</div>
+        
+        <div id="reading-box" class="reading-box hidden"></div>
+        <h2 class="question-text" id="question-text">載入題目中...</h2>
+        
+        <div class="options-group" id="options-container"></div>
+        
+        <button class="btn-quiz" id="next-btn" onclick="nextQuestion()" disabled>下一題</button>
+      </div>
+
+
+
+      <!-- SCREEN 4: RESULTS & DETAILED REVIEW -->
+      <div id="results-screen" class="hidden">
+        <div class="results-summary">
+          <h3 style="font-size: 1rem; color: rgba(246, 244, 234, 0.7); text-transform: uppercase;">預估德語程度</h3>
+          <div class="result-badge" id="result-score">A2</div>
+          <h2 class="result-title" id="result-title">初級德語 (Elementary)</h2>
+          <p id="result-desc" style="color: var(--cream); margin-bottom: 24px;">你能夠理解並使用日常基礎表達與簡單句子。</p>
+
+          <div class="monetization-box">
+            <h4 id="cta-heading" style="color: var(--gold); margin-bottom: 8px; font-family: var(--font-cjk); font-size: 1.1rem;">想快速突破目前的等級嗎？</h4>
+            <p id="cta-text" style="font-size: 0.95rem; color: var(--cream); margin-bottom: 18px;">預約柯艾瑞 (Erik) 的一對一線上或實體免費諮詢，針對你的弱點安排高效學習計畫！</p>
+            <a href="https://line.me/ti/p/~erikgundermann" target="_blank" style="text-decoration: none;">
+              <button class="btn-quiz" style="background: var(--gold); color: var(--ink);">透過 LINE 預約諮詢</button>
+            </a>
+          </div>
+        </div>
+
+        <!-- Detailed Review Section -->
+        <div class="review-section">
+          <h3 class="review-heading">測驗歷程與解析</h3>
+          <p style="color:var(--cream); font-size:0.9rem; margin-bottom:16px;">* 以下是系統根據你的程度，為你挑選出的 18 道適性題目。</p>
+          <div id="review-list"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2026 Erik Gundermann · 柯艾瑞</p>
+  </footer>
+
+  <script>
+    // CEFR Levels mapped to index (0-4)
+    const LEVEL_NAMES = ["A1", "A2", "B1", "B2", "C1"];
+    
+    // Adaptive track: 18 questions total (8 Grammar, 5 Vocab, 5 Reading)
+    const testTrack = [
+      "grammar", "vocab", "reading", 
+      "grammar", "grammar", "vocab", 
+      "reading", "grammar", "vocab", 
+      "grammar", "reading", "grammar", 
+      "vocab", "grammar", "reading", 
+      "grammar", "vocab", "reading"
+    ];
+
+    // Structured Question Bank (Pools)
+    const questionBank = {
+      grammar: {
+        0: [ // A1
+          { level: "A1", text: "Wie ______ du? – Ich heiße Max.", options: ["bist", "heiße", "heißt", "sein"], correct: 2, explanation: "主詞為 du，動詞 heißen 詞尾需加上 -t，因此為 heißt。" },
+          { level: "A1", text: "Das ist ______ Buch.", options: ["ein", "eine", "einen", "eines"], correct: 0, explanation: "中性名詞 (das Buch) 在主格 (Nominativ) 的不定冠詞為 ein。" },
+          { level: "A1", text: "Ich ______ aus Taiwan.", options: ["kommst", "komme", "kommt", "kommen"], correct: 1, explanation: "主詞 Ich 搭配的動詞字尾為 -e，所以是 komme。" },
+          { level: "A1", text: "Wir ______ heute Abend Pizza essen.", options: ["möchtet", "möchten", "möchte", "möchtest"], correct: 1, explanation: "主詞 Wir (我們) 搭配的動詞需用原形 (Infinitiv)，因此是 möchten。" },
+          { level: "A1", text: "______ kommst du? – Aus Berlin.", options: ["Wer", "Wie", "Woher", "Wohin"], correct: 2, explanation: "回答是「來自... (Aus...)」，所以疑問詞必須是問來源的 Woher (從哪裡來)。" },
+          { level: "A1", text: "Er ______ kein Fleisch.", options: ["esst", "isst", "esse", "essen"], correct: 1, explanation: "動詞 essen (吃) 在第三人稱單數 (Er/Sie/Es) 時會發生母音變化 (e 變 i)，變成 isst。" }
+        ],
+        1: [ // A2
+          { level: "A2", text: "Gestern ______ ich ins Kino gegangen.", options: ["habe", "bin", "war", "werde"], correct: 1, explanation: "gehen 是表示移動的動詞，完成式助動詞必須用 sein。主詞 ich 搭配 bin。" },
+          { level: "A2", text: "Er hilft ______ Frau.", options: ["die", "der", "den", "dem"], correct: 1, explanation: "動詞 helfen 後面要求與格 (Dativ)。陰性名詞 (die Frau) 的 Dativ 為 der。" },
+          { level: "A2", text: "Das Buch liegt ______ Tisch.", options: ["auf den", "auf dem", "an den", "in dem"], correct: 1, explanation: "liegen 表示靜止狀態，搭配介系詞 auf 需用與格 (Dativ)。陽性名詞 (der Tisch) 變成 dem。" },
+          { level: "A2", text: "Ich ziehe ______ die Jacke an.", options: ["mich", "mir", "dich", "wir"], correct: 1, explanation: "穿衣服 (sich etwas anziehen) 如果受詞 (die Jacke) 已出現，反身代名詞需用與格 (Dativ)，ich 對應 mir。" },
+          { level: "A2", text: "Als Kind ______ ich oft im Garten gespielt.", options: ["habe", "hatten", "bin", "war"], correct: 0, explanation: "spielen 的完成式助動詞為 haben。主詞 ich 搭配 habe。" },
+          { level: "A2", text: "Sie lernt Deutsch, ______ sie in Deutschland studieren will.", options: ["denn", "aber", "weil", "dass"], correct: 2, explanation: "weil 引導原因副詞子句，會將動詞 (will) 踢到句尾。" }
+        ],
+        2: [ // B1
+          { level: "B1", text: "Ich bleibe zu Hause, ______ es regnet.", options: ["weil", "wegen", "deshalb", "obwohl"], correct: 0, explanation: "weil 引導從屬子句，動詞在句尾；denn 是對等連詞，動詞會在第二位。" },
+          { level: "B1", text: "Das ist der Mann, ______ Auto gestohlen wurde.", options: ["den", "dem", "dessen", "des"], correct: 2, explanation: "關係代名詞所有格 (Genitiv)。指代「那個男人的 (車)」，陽性所有格為 dessen。" },
+          { level: "B1", text: "Ich freue mich ______, dich bald wiederzusehen.", options: ["auf", "darauf", "unter", "über"], correct: 1, explanation: "sich freuen auf 表示對未來的事感到期待，後面接子句時需用代名詞副詞 darauf。" },
+          { level: "B1", text: "Er spricht mit einem ______ Herrn.", options: ["freundlicher", "freundlichen", "freundliche", "freundlichem"], correct: 1, explanation: "einem 是 Dativ，其後的形容詞字尾必須加上 -en (freundlichen)。" },
+          { level: "B1", text: "Ich habe den ______ (Student) nach dem Weg gefragt.", options: ["Student", "Studenten", "Students", "Studenter"], correct: 1, explanation: "Student 屬於弱變化名詞 (n-Deklination)，在受格 (Akkusativ) 需加上 -en。" },
+          { level: "B1", text: "Wir haben beschlossen, am Wochenende ans Meer ______.", options: ["fahren", "zu fahren", "gefahren", "fuhren"], correct: 1, explanation: "beschlossen 後面接不定詞片語 (Infinitiv mit zu)。" }
+        ],
+        3: [ // B2
+          { level: "B2", text: "Je mehr du übst, ______ besser wirst du sprechen.", options: ["umso", "so", "wie", "als"], correct: 1, explanation: "固定句型「Je + 比較級 ..., desto (或 umso) + 比較級 ...」(越...就越...)。" },
+          { level: "B2", text: "Das Haus ______ im Jahr 1990 gebaut.", options: ["hat", "ist", "wurde", "wird"], correct: 2, explanation: "被動語態的過去式 (Präteritum Passiv)，由 wurde + 過去分詞構成。" },
+          { level: "B2", text: "Er ______ gerne gekommen, aber er hatte keine Zeit.", options: ["wäre", "hätte", "sei", "würde"], correct: 0, explanation: "虛擬二式 (Konjunktiv II) 表過去非真實情況。kommen 的助動詞為 sein，故用 wäre。" },
+          { level: "B2", text: "Das ist eine ______ Frage.", options: ["interessierende", "interessierte", "interessant", "interessierende"], correct: 0, explanation: "現在分詞 (Partizip I) 作形容詞，表示主動的「令人感興趣的」(interessierend)，加上陰性詞尾 -e。" },
+          { level: "B2", text: "Weder er ______ sie haben den Fehler bemerkt.", options: ["oder", "noch", "und", "aber"], correct: 1, explanation: "雙重連詞 Weder ... noch ... (既不...也不...) 是固定搭配。" },
+          { level: "B2", text: "Ich erinnere mich nicht ______, was gestern passiert ist.", options: ["an", "daran", "darauf", "davon"], correct: 1, explanation: "sich erinnern an (回憶起...)。後面接子句時，需使用代名詞副詞 daran。" }
+        ],
+        4: [ // C1
+          { level: "C1", text: "Wenn das Problem früher erkannt worden ______, hätte man es gelöst.", options: ["wäre", "hätte", "sei", "würde"], correct: 0, explanation: "過去非真實被動語態 (Konjunktiv II Vergangenheit Passiv)：wäre + 過去分詞 + worden。" },
+          { level: "C1", text: "Der Politiker behauptet, er ______ von nichts gewusst.", options: ["habe", "hätten", "war", "wäre"], correct: 0, explanation: "間接引語 (Indirekte Rede) 通常使用虛擬一式 (Konjunktiv I)。ich/er/sie habe..." },
+          { level: "C1", text: "Die Tür lässt sich nicht ______.", options: ["öffnen", "geöffnet", "zu öffnen", "öffnete"], correct: 0, explanation: "sich lassen + 原形動詞 (Infinitiv) 是被動語態的替代形式，意為「可以被...」。" },
+          { level: "C1", text: "______ des starken Regens fand das Spiel statt.", options: ["Durch", "Trotz", "Aufgrund", "Nach"], correct: 1, explanation: "Trotz + 屬格 (Genitiv) 表示「儘管...」。儘管下大雨，比賽還是舉行了。" },
+          { level: "C1", text: "Die ______ Maschine muss repariert werden.", options: ["kaputtging", "kaputtgegangene", "kaputtgegangen", "kaputten"], correct: 1, explanation: "過去分詞 (Partizip II) 作形容詞，表示已完成的狀態「已經壞掉的」(kaputtgegangene)。" },
+          { level: "C1", text: "Das Gesetz tritt nächste Woche in ______.", options: ["Kraft", "Wirkung", "Macht", "Gültigkeit"], correct: 0, explanation: "in Kraft treten 是固定的名詞動詞組合 (Nomen-Verb-Verbindung)，意為「生效」。" }
+        ]
+      },
+      
+      vocab: {
+        0: [ // A1
+          { level: "A1", text: "Welches Wort passt? – Apfel, Banane, ______", options: ["Auto", "Hund", "Orange", "Tisch"], correct: 2, explanation: "前面都是水果 (Obst)，Orange (橘子) 也是水果。" },
+          { level: "A1", text: "Heute ist Montag. Morgen ist ______.", options: ["Dienstag", "Mittwoch", "Sonntag", "Freitag"], correct: 0, explanation: "Montag (星期一) 的明天是 Dienstag (星期二)。" },
+          { level: "A1", text: "Der Bruder von meiner Mutter ist mein ______.", options: ["Opa", "Onkel", "Cousin", "Vater"], correct: 1, explanation: "媽媽的兄弟是舅舅/叔伯 (Onkel)。" },
+          { level: "A1", text: "Ich habe Durst. Ich möchte Wasser ______.", options: ["essen", "trinken", "werfen", "spielen"], correct: 1, explanation: "Durst 表示口渴，對應的動作是 trinken (喝)。" },
+          { level: "A1", text: "Welche Farbe hat eine Tomate normalerweise?", options: ["Blau", "Gelb", "Rot", "Grün"], correct: 2, explanation: "Tomate (番茄) 通常是 Rot (紅色) 的。" },
+          { level: "A1", text: "Ich brauche einen Stift zum ______.", options: ["Schreiben", "Lesen", "Essen", "Schlafen"], correct: 0, explanation: "Stift 是筆，用來 Schreiben (寫字)。" }
+        ],
+        1: [ // A2
+          { level: "A2", text: "Ich brauche einen ______, weil es regnet.", options: ["Computer", "Regenschirm", "Koffer", "Tisch"], correct: 1, explanation: "es regnet (下雨)，所以需要 Regenschirm (雨傘)。" },
+          { level: "A2", text: "Ich muss einen Termin beim Arzt ______.", options: ["machen", "vereinbaren", "nehmen", "geben"], correct: 1, explanation: "vereinbaren 是「預約、約定」的標準用詞，einen Termin vereinbaren (預約時間)。" },
+          { level: "A2", text: "Du bist krank. Du musst in die ______ gehen und Medizin kaufen.", options: ["Bibliothek", "Bäckerei", "Apotheke", "Post"], correct: 2, explanation: "買藥 (Medizin) 要去 Apotheke (藥局)。" },
+          { level: "A2", text: "Der Zug ______ pünktlich um 8 Uhr ab.", options: ["fährt", "fliegt", "geht", "kommt"], correct: 0, explanation: "火車 (Zug) 離開/出發搭配動詞 abfahren (fährt... ab)。" },
+          { level: "A2", text: "Wir suchen eine neue Wohnung zum ______.", options: ["Schreiben", "Mieten", "Rennen", "Sitzen"], correct: 1, explanation: "找房子通常是為了 Mieten (租)" },
+          { level: "A2", text: "Herr Ober, die ______ bitte!", options: ["Rechnung", "Glas", "Geld", "Menü"], correct: 0, explanation: "在餐廳結帳時會說 Die Rechnung bitte! (麻煩買單/結帳！)。" }
+        ],
+        2: [ // B1
+          { level: "B1", text: "Das Konzert wurde wegen des Wetters ______.", options: ["abgesagt", "geöffnet", "verschieden", "ausgezeichnet"], correct: 0, explanation: "abgesagt 意思是「取消」。音樂會因天氣被取消。" },
+          { level: "B1", text: "Für diesen Job brauchen Sie viel ______ im Bereich IT.", options: ["Erfahrung", "Geduld", "Angst", "Hoffnung"], correct: 0, explanation: "Erfahrung 意思是「經驗」。應徵工作通常需要相關領域的經驗。" },
+          { level: "B1", text: "Er was sehr ______, weil er die Prüfung nicht bestanden hat.", options: ["glücklich", "enttäuscht", "begeistert", "stolz"], correct: 1, explanation: "考試沒通過會感到 enttäuscht (失望的)。" },
+          { level: "B1", text: "Ich muss noch schnell zur Bank gehen und Geld ______.", options: ["abheben", "auheben", "unterheben", "vorheben"], correct: 0, explanation: "Geld abheben 意思是「提款/領錢」。" },
+          { level: "B1", text: "Wir müssen die ______ schützen, um den Klimawandel zu stoppen.", options: ["Umwelt", "Wirtschaft", "Gesellschaft", "Politik"], correct: 0, explanation: "Umwelt 意思是「環境」。保護環境以阻止氣候變遷。" },
+          { level: "B1", text: "Bitte füllen Sie das ______ aus.", options: ["Formular", "Buch", "Bild", "Fenster"], correct: 0, explanation: "ausfüllen (填寫) 搭配的受詞通常是 Formular (表格)。" }
+        ],
+        3: [ // B2
+          { level: "B2", text: "Die Entscheidung ist endgültig und kann nicht mehr ______ werden.", options: ["rückgängig gemacht", "überzeugt", "abgelehnt", "verschoben"], correct: 0, explanation: "rückgängig machen 意為「撤銷、使恢復原狀」。決定已定，無法撤銷。" },
+          { level: "B2", text: "Der neue Chef ist sehr ______; er verlangt viel von seinen Mitarbeitern.", options: ["anspruchslos", "anspruchsvoll", "tolerant", "faul"], correct: 1, explanation: "anspruchsvoll 意思是「要求高的、嚴格的」。" },
+          { level: "B2", text: "Die Firma ______ den Mitarbeitern kostenlose Getränke zur Verfügung.", options: ["gibt", "stellt", "macht", "legt"], correct: 1, explanation: "zur Verfügung stellen 是固定搭配，意為「提供...給...使用」。" },
+          { level: "B2", text: "Wir müssen ______ dringend mit diesem Problem befassen.", options: ["uns", "sich", "euch", "ihnen"], correct: 0, explanation: "sich befassen mit (著手處理/探討...) 是反身動詞。主詞 Wir 對應 uns。" },
+          { level: "B2", text: "Er ist ein sehr ______ Mitarbeiter; er macht seine Aufgaben immer pünktlich.", options: ["zuverlässiger", "nachlässiger", "arroganter", "chaotischer"], correct: 0, explanation: "zuverlässig 意思是「可靠的」。總是準時完成任務代表他很可靠。" },
+          { level: "B2", text: "Die Regierung plant neue ______, um die Arbeitslosigkeit zu senken.", options: ["Maßnahmen", "Folgen", "Ursachen", "Bedingungen"], correct: 0, explanation: "Maßnahmen 意思是「措施」。政府計畫新措施來降低失業率。" }
+        ],
+        4: [ // C1
+          { level: "C1", text: "Seine Argumentation ist absolut ______, da gibt es keinen Widerspruch.", options: ["schlüssig", "fragwürdig", "lückenhaft", "oberflächlich"], correct: 0, explanation: "schlüssig 意為「合乎邏輯的、令人信服的」。沒有矛盾代表論點很縝密。" },
+          { level: "C1", text: "Diese Information ist für das Verständnis des Textes völlig ______ und kann weggelassen werden.", options: ["essenziell", "überflüssig", "relevant", "maßgeblich"], correct: 1, explanation: "überflüssig 意思是「多餘的」。既然可以省略 (weggelassen)，代表資訊是多餘的。" },
+          { level: "C1", text: "Der Fehler hatte ______ Konsequenzen für das gesamte Projekt.", options: ["belanglose", "gravierende", "geringfügige", "marginale"], correct: 1, explanation: "gravierend 意思是「嚴重的、重大的」。" },
+          { level: "C1", text: "In diesem Konflikt ______ er als Vermittler zwischen den beiden Parteien.", options: ["fungiert", "simuliert", "funktioniert", "agitiert"], correct: 0, explanation: "fungieren als... 意思是「擔任/充當...角色」。" },
+          { level: "C1", text: "Er hatte ein schlechtes ______, weil er seinen Freund angelogen hatte.", options: ["Gewissen", "Gefühl", "Geheimnis", "Gedächtnis"], correct: 0, explanation: "ein schlechtes Gewissen haben 意為「感到良心不安/內疚」。" },
+          { level: "C1", text: "Der Klimawandel ist eine ______ Herausforderung für die Menschheit.", options: ["unausweichliche", "vermeidbare", "triviale", "irrelevante"], correct: 0, explanation: "unausweichlich 意思是「不可避免的」。氣候變遷是人類不可避免的挑戰。" }
+        ]
+      },
+      
+      reading: {
+        0: [ // A1
+          { level: "A1", reading: "Hallo! Ich bin Anna. Ich lerne Deutsch in Berlin.", text: "Was macht Anna?", options: ["Sie schläft.", "Sie lernt Deutsch.", "Sie isst.", "Sie arbeitet."], correct: 1, explanation: "文中第一句就明確提到 Ich lerne Deutsch (我在學德文)。" },
+          { level: "A1", reading: "Wir treffen uns am Bahnhof um 15 Uhr.", text: "Wo treffen sie sich?", options: ["Im Café", "In der Schule", "Am Bahnhof", "Zu Hause"], correct: 2, explanation: "文中提到 am Bahnhof (在火車站)。" },
+          { level: "A1", reading: "Das Restaurant ist am Montag geschlossen.", text: "Wann hat das Restaurant zu?", options: ["Dienstag", "Sonntag", "Montag", "Freitag"], correct: 2, explanation: "geschlossen 意思是「關閉的」。文中指明是 am Montag (星期一)。" },
+          { level: "A1", reading: "Ich esse gern Pizza und trinke Cola.", text: "Was trinkt die Person gern?", options: ["Kaffee", "Wasser", "Tee", "Cola"], correct: 3, explanation: "文中寫道 trinke Cola (喝可樂)。" },
+          { level: "A1", reading: "Heute ist das Wetter sehr schön und warm.", text: "Wie ist das Wetter?", options: ["Kalt", "Regnerisch", "Schön und warm", "Schlecht"], correct: 2, explanation: "文中清楚說明天氣 sehr schön und warm (非常好且溫暖)。" },
+          { level: "A1", reading: "Mein Hund ist klein und braun.", text: "Welche Farbe hat der Hund?", options: ["Weiß", "Schwarz", "Braun", "Grau"], correct: 2, explanation: "文中描述狗是 klein (小) 和 braun (棕色)。" }
+        ],
+        1: [ // A2
+          { level: "A2", reading: "Lisa kann heute nicht kommen, weil sie beim Arzt ist.", text: "Wo ist Lisa?", options: ["Im Büro", "Beim Arzt", "Zu Hause", "Im Café"], correct: 1, explanation: "文中解釋她不能來是因為 sie beim Arzt ist (她在看醫生)。" },
+          { level: "A2", reading: "Der Flug nach München startet um 14:30 Uhr von Gate 5.", text: "Von welchem Gate startet der Flug?", options: ["Gate 3", "Gate 4", "Gate 5", "Gate 6"], correct: 2, explanation: "資訊明確指出 von Gate 5 (從 5 號登機門)。" },
+          { level: "A2", reading: "Ich gehe in den Supermarkt, weil ich Brot und Milch brauche.", text: "Was will die Person kaufen?", options: ["Brot und Milch", "Äpfel und Bananen", "Käse und Wurst", "Kaffee und Kuchen"], correct: 0, explanation: "她去超市是因為需要 Brot und Milch (麵包和牛奶)。" },
+          { level: "A2", reading: "Am Wochenende spiele ich oft Fußball mit meinen Freunden.", text: "Was macht die Person am Wochenende?", options: ["Lesen", "Fußball spielen", "Arbeiten", "Schlafen"], correct: 1, explanation: "文中表示她週末經常 Fußball spielen (踢足球)。" },
+          { level: "A2", reading: "Das Museum ist täglich von 9 bis 17 Uhr geöffnet, außer montags.", text: "An welchem Tag ist das Museum geschlossen?", options: ["Dienstag", "Mittwoch", "Sonntag", "Montag"], correct: 3, explanation: "außer montags 意思是「除了星期一」，代表星期一沒開。" },
+          { level: "A2", reading: "Ich lade dich zu meiner Geburtstagsparty am Samstag ein.", text: "Wann ist die Party?", options: ["Freitag", "Samstag", "Sonntag", "Montag"], correct: 1, explanation: "邀請函寫明派對在 am Samstag (星期六)。" }
+        ],
+        2: [ // B1
+          { level: "B1", reading: "Unsere Filiale bleibt am Feiertag geschlossen. Freitag sind wir wieder da.", text: "Wann kann man den Laden wieder besuchen?", options: ["Am Feiertag", "Am Freitag", "Am Wochenende", "Gar nicht"], correct: 1, explanation: "文本說週五會「wieder da」（重新營業），因此週五可以再次造訪。" },
+          { level: "B1", reading: "Um gesund zu bleiben, sollte man viel Wasser trinken und regelmäßig Sport treiben.", text: "Was empfiehlt der Text für die Gesundheit?", options: ["Viel schlafen und ruhen", "Wasser trinken und aktiv sein", "Nur gesunde Lebensmittel essen", "Regelmäßig zum Arzt gehen"], correct: 1, explanation: "文本提到喝水與規律運動，選項用 'aktiv sein'（保持活躍）來對應 'Sport treiben'。" },
+          { level: "B1", reading: "Immer mehr Menschen nutzen das Internet, um ihre Einkäufe zu erledigen, statt in die Stadt zu gehen.", text: "Warum gehen manche Menschen seltener in die Stadt?", options: ["Weil sie lieber online shoppen", "Weil die Geschäfte geschlossen sind", "Weil das Internet schneller ist", "Weil sie kein Geld haben"], correct: 0, explanation: "從人們用網路來取代去市區購物，可推論他們傾向線上購物。" },
+          { level: "B1", reading: "Beim Sprachenlernen ist es wichtig, nicht nur Grammatik zu pauken, sondern auch aktiv zu sprechen.", text: "Was kritisiert oder ergänzt der Autor hier?", options: ["Grammatik ist komplett unwichtig", "Man sollte nur sprechen lernen", "Sprechen ist ebenso wichtig wie Grammatik", "Man lernt Sprachen am besten allein"], correct: 2, explanation: "句型 'nicht nur... sondern auch' 強調「不只...還有...」，意指口說跟文法一樣重要。" },
+          { level: "B1", reading: "Die Stadtführung beginnt um 10 Uhr vor dem Rathaus und dauert genau zwei Stunden.", text: "Wann ist die Stadtführung voraussichtlich zu Ende?", options: ["Um 10 Uhr", "Um 11 Uhr", "Um 12 Uhr", "Um 13 Uhr"], correct: 2, explanation: "10 點開始，持續 2 小時，因此結束時間是 12 點 (10 + 2 = 12)。" },
+          { level: "B1", reading: "Wir sind gestern in unsere neue Wohnung umgezogen, aber es fehlen noch einige Möbel im Wohnzimmer.", text: "In welchem Zustand ist die Situation aktuell?", options: ["Die Wohnung ist komplett eingerichtet", "Der Umzug steht noch bevor", "Der Umzug ist frisch vorbei, aber es ist noch nicht alles fertig", "Sie suchen noch eine Wohnung"], correct: 2, explanation: "昨天剛搬家 (umgezogen) 且客廳還少一些傢俱，代表剛搬完但還沒完全佈置好。" }
+        ],
+        3: [ // B2
+          { level: "B2", reading: "Umweltfreundliche Verpackungen gewinnen in der Industrie zunehmend an Bedeutung, da Verbraucher verstärkt Nachhaltigkeit einfordern.", text: "Warum ändern Unternehmen ihre Verpackungen?", options: ["Weil Gesetze es streng vorschreiben", "Weil Kunden mehr Wert auf Umweltschutz legen", "Weil umweltfreundliche Materialien billiger sind", "Um die Transportkosten zu senken"], correct: 1, explanation: "原文提到因為消費者要求永續性 (Nachhaltigkeit einfordern)，對應選項為「客戶更重視環保」。" },
+          { level: "B2", reading: "Home-Office bietet maximale Flexibilität, birgt jedoch das Risiko, dass die Grenze zwischen Berufs- und Privatleben verschwimmt.", text: "Welches Problem kann im Home-Office entstehen?", options: ["Man arbeitet automatisch viel weniger", "Man verliert den Kontakt zu Kunden völlig", "Arbeit und Freizeit vermischen sich zu stark", "Die technische Ausrüstung ist meistens schlecht"], correct: 2, explanation: "原文中的 'Grenze... verschwimmt'（界線模糊）被同義改寫為 'Arbeit und Freizeit vermischen sich'。" },
+          { level: "B2", reading: "Die Umstellung auf erneuerbare Energien erfordert enorme Investitionen, erweist sich aber langfristig als wirtschaftlich rentabel.", text: "Wie bewertet der Text erneuerbare Energien auf lange Sicht?", options: ["Als finanzielles Risiko", "Als wirtschaftlich lohnend", "Als zu teuer für den Staat", "Als technologisch unmöglich"], correct: 1, explanation: "原文的 'langfristig... wirtschaftlich rentabel'（長遠來看具經濟效益）對應選項的 'wirtschaftlich lohnend'。" },
+          { level: "B2", reading: "Soziale Medien beschleunigen den Informationsfluss, bergen aber die Gefahr, dass ungeprüfte Meldungen rasant die Runde machen.", text: "Was ist eine negative Begleiterscheinung sozialer Medien laut Text?", options: ["Informationen kommen viel zu spät bei den Leuten an", "Falsche oder ungeprüfte Nachrichten verbreiten sich sehr schnell", "Niemand liest mehr Nachrichten im Internet", "Der Datenaustausch ist zu kompliziert geworden"], correct: 1, explanation: "原文的 'ungeprüfte Meldungen rasant die Runde machen' 意指未經證實的消息傳播得極快。" },
+          { level: "B2", reading: "Stress im Berufsalltag führt häufig zu gesundheitlichen Problemen, weshalb präventive Maßnahmen im Betrieb immer unverzichtbarer werden.", text: "Warum fordert der Text mehr Prävention am Arbeitsplatz?", options: ["Um die Arbeitszeit zu verkürzen", "Weil stressbedingte Gesundheitsprobleme zunehmen", "Weil Mitarbeiter sonst streiken", "Um Geld bei den Krankenkassen zu sparen"], correct: 1, explanation: "原文指出因為工作壓力常導致健康問題，所以預防措施不可或缺。" },
+          { level: "B2", reading: "Moderne Mobilitätskonzepte in Metropolen zielen darauf ab, den Individualverkehr zugunsten des öffentlichen Nahverkehrs einzuschränken.", text: "Was ist das Hauptziel dieser Konzepte?", options: ["Mehr Parkplätze für Autos zu bauen", "Den Autoverkehr zugunsten von Öffis zu verringern", "Den öffentlichen Nahverkehr abzuschaffen", "Die Benzinpreise zu erhöhen"], correct: 1, explanation: "原文的 'Individualverkehr... einzuschränken' 與 'öffentlichen Nahverkehr'（大眾運輸）對應選項中的限制汽車交通。" }
+        ],
+        4: [ // C1
+          { level: "C1", reading: "Trotz der fortschreitenden Digitalisierung plädieren Hirnforscher vehement für die Handschrift, da sie komplexe neuronale Vernetzungen im Gehirn stimuliert.", text: "Welchen Vorteil hat das Schreiben von Hand laut Experten?", options: ["Es geht wesentlich schneller als das Tippen", "Es regt bestimmte neuronale Verknüpfungen im Gehirn an", "Es verbessert primär die visuelle Wahrnehmung", "Es ersetzt die digitale Kommunikation komplett"], correct: 1, explanation: "原文指出手寫能刺激腦部複雜的神經網絡連結 (neuronale Vernetzungen)。" },
+          { level: "C1", reading: "Die ethischen Implikationen autonomer Waffensysteme sind Gegenstand kontroverser Debatten, insbesondere hinsichtlich der Verantwortungszuschreibung.", text: "Worauf liegt der Hauptfokus der Debatte?", options: ["Auf den reinen Herstellungskosten", "Auf der Frage, wer bei Fehlern rechtlich haftet", "Auf der technologischen Machbarkeit", "Auf der Geschwindigkeit der Systeme"], correct: 1, explanation: "關鍵字 'Verantwortungszuschreibung'（責任歸屬）對應選項中的誰應負法律責任。" },
+          { level: "C1", reading: "Der demografische Wandel zwingt den Gesetzgeber zu einschneidenden Rentenreformen, so soll das Umlageverfahren nicht kollabieren.", text: "Was droht, wenn keine Rentenreformen durchgeführt werden?", options: ["Ein Zusammenbruch des aktuellen Rentensystems", "Eine plötzliche Verdopplung der Renten", "Dass niemand mehr in Rente gehen darf", "Ein massiver Zuzug von Fachkräften"], correct: 0, explanation: "原文的 'Umlageverfahren... kollabieren'（現收現付制崩潰）對應選項的 Rentensystems 崩潰。" },
+          { level: "C1", reading: "Globalisierung führt keineswegs zwangsläufig zu einer Monokultur, sondern begünstigt häufig die Entstehung hybrider Identitätsformen.", text: "Wie wirkt sich die Globalisierung laut dem Autor auf Identitäten aus?", options: ["Sie zerstört alle lokalen Kulturen restlos", "Sie führt zu einer weltweiten Einheitskultur", "Sie fördert oft gemischte oder vielschichtige Identitäten", "Sie hat keinerlei Einfluss auf die Kultur"], correct: 2, explanation: "原文的 'hybride Identitätsformen'（混合身份形式）對應選項中促進「混合或多層次身份」。" },
+          { level: "C1", reading: "In der modernen Sprachwissenschaft gilt es als Konsens, dass Sprache nicht bloß Realität abbildet, sondern diese aktiv konstruiert und prägt.", text: "Welche Funktion hat Sprache nach Ansicht von Linguisten?", options: ["Sie ist ein rein passives Werkzeug zur Dokumentation", "Sie formt und erschafft Wirklichkeit aktiv mit", "Sie verfälscht grundsätzlich jede Form von Realität", "Sie ist ein statisches Regelsystem"], correct: 1, explanation: "原文的 'aktiv konstruiert und prägt'（主動建構與形塑）對應選項的「主動形塑與創造現實」。" },
+          { level: "C1", reading: "Dauersubventionen für fossile Energieträger konterkarieren diametral die politisch proklamierten Klimaschutzziele.", text: "Wie bewertet der Autor Subventionen für fossile Energien?", options: ["Als sinnvolle Starthilfe für die Wirtschaft", "Als direkten Widerspruch zum Klimaschutz", "Als unbedeutend für die Umweltpolitik", "Als wirksames Mittel gegen den Klimawandel"], correct: 1, explanation: "原文的 'konterkarieren diametral'（與...完全背道而馳/互相抵觸）對應選項中的與氣候保護直接矛盾。" }
+        ]
+      }
+    };
+
+    // Make a working deep copy of the bank so we can destructively splice questions out without repeating
+    let activeBank = JSON.parse(JSON.stringify(questionBank));
+
+    // State variables
+    let currentQIndex = 0;
+    let currentDifficultyLevel = 1; // Start at A2 (index 1)
+    let selectedOption = null;
+    let timerInterval = null;
+    let timeLeft = 600; // 10 Minutes
+    
+    // Arrays to store test history for final calculation and review UI
+    let answeredQuestions = []; 
+    let difficultyHistory = [];
+
+    // Helper: Select random question from available pool
+    function pullQuestion(category, levelIdx) {
+      let pool = activeBank[category][levelIdx];
+      
+      // Fallback logic if pool is empty (look down, then up)
+      if (pool.length === 0) {
+        if (levelIdx > 0 && activeBank[category][levelIdx - 1].length > 0) {
+          pool = activeBank[category][levelIdx - 1];
+        } else if (levelIdx < 4 && activeBank[category][levelIdx + 1].length > 0) {
+          pool = activeBank[category][levelIdx + 1];
+        } else {
+          return { level: "A1", text: "Pool empty. Was ist 1+1?", options: ["1", "2", "3", "4"], correct: 1, explanation: "Fallback question." };
+        }
+      }
+      
+      let randomIndex = Math.floor(Math.random() * pool.length);
+      return pool.splice(randomIndex, 1)[0]; 
+    }
+
+    function startQuiz() {
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('quiz-screen').classList.remove('hidden');
+      startTimer();
+      loadNextAdaptiveQuestion();
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        let mins = Math.floor(timeLeft / 60);
+        let secs = timeLeft % 60;
+        document.getElementById('timer-display').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          showResultsDirectly();
+        }
+      }, 1000);
+    }
+
+    function loadNextAdaptiveQuestion() {
+      if (currentQIndex >= testTrack.length) {
+        clearInterval(timerInterval);
+        showResultsDirectly();
+        return;
+      }
+
+      let currentCategory = testTrack[currentQIndex];
+      let q = pullQuestion(currentCategory, currentDifficultyLevel);
+      
+      q.category = currentCategory; 
+      q.askedAtLevel = LEVEL_NAMES[currentDifficultyLevel];
+      
+      answeredQuestions[currentQIndex] = { question: q, userAns: null };
+
+      document.getElementById('question-number').innerText = `第 ${currentQIndex + 1} 題 / 共 ${testTrack.length} 題`;
+      document.getElementById('progress-fill').style.width = `${((currentQIndex + 1) / testTrack.length) * 100}%`;
+      
+      let typeLabel = currentCategory === 'grammar' ? '文法' : currentCategory === 'vocab' ? '詞彙' : '閱讀';
+      document.getElementById('level-tag').innerText = `目前難度: ${LEVEL_NAMES[currentDifficultyLevel]} · ${typeLabel}`;
+      
+      let readingBox = document.getElementById('reading-box');
+      if (q.reading) {
+        readingBox.innerHTML = `<strong>📖 閱讀短文：</strong><br>${q.reading}`;
+        readingBox.classList.remove('hidden');
+      } else {
+        readingBox.classList.add('hidden');
+      }
+
+      document.getElementById('question-text').innerText = q.text;
+      
+      let container = document.getElementById('options-container');
+      container.innerHTML = '';
+      selectedOption = null;
+      document.getElementById('next-btn').disabled = true;
+
+      q.options.forEach((opt, idx) => {
+        let btn = document.createElement('button');
+        btn.className = 'quiz-opt-btn';
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(idx, btn);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectOption(index, btnElement) {
+      selectedOption = index;
+      document.querySelectorAll('.quiz-opt-btn').forEach(b => b.classList.remove('selected'));
+      btnElement.classList.add('selected');
+      document.getElementById('next-btn').disabled = false;
+    }
+
+    function nextQuestion() {
+      let currentQData = answeredQuestions[currentQIndex].question;
+      answeredQuestions[currentQIndex].userAns = selectedOption;
+      
+      let isCorrect = (selectedOption === currentQData.correct);
+
+      difficultyHistory.push(currentDifficultyLevel);
+
+      if (isCorrect) {
+        currentDifficultyLevel = Math.min(4, currentDifficultyLevel + 1);
+      } else {
+        currentDifficultyLevel = Math.max(0, currentDifficultyLevel - 1);
+      }
+
+      currentQIndex++;
+      loadNextAdaptiveQuestion();
+    }
+
+    function showResultsDirectly() {
+      document.getElementById('quiz-screen').classList.add('hidden');
+      document.getElementById('results-screen').classList.remove('hidden');
+      document.getElementById('quiz-card').classList.add('wide');
+      renderResults();
+    }
+
+    function getPersonalizedTips(cefrLevel, weakestCategory) {
+      let tipsMap = {
+        grammar: "從你的答題狀況來看，你的<strong>文法結構（特別是格位變化或句型結構）</strong>是目前比較容易卡關的地方。德語文法雖然規則多，但透過大量口說練習與情境套用，其實比死背公式有效率得多。",
+        vocab: "在這次測驗中，你的<strong>詞彙量與生活應用字彙</strong>還有成長空間。建議平時可以多閱讀短篇文章，並嘗試把新學到的單字直接用在造句或日常對話中。",
+        reading: "你的文法與單字基礎不錯，但在<strong>長篇閱讀理解與語意推論</strong>上還可以更精進。閱讀時試著不要逐字查字典，而是從前後文抓取核心邏輯與作者意圖。"
+      };
+
+      let levelAdvice = {
+        "A1": "作為德語初學者，現階段最重要的是建立清晰的發音習慣與核心動詞變化。扎實走好每一步，未來進步會非常快！",
+        "A2": "你已經掌握了基礎日常對話。接下來的挑戰是跨入中級文法（如完成式與從屬子句），多開口說是突破這個階段的關鍵。",
+        "B1": "你已經具備很好的日常溝通能力！要邁向 B2/C1 的流利水準，需要接觸更多主題式的深度對話與細膩的文法修飾。",
+        "B2": "你的德語水準相當扎實，能應付多數專業或複雜情境。若想更上一層樓，可以透過高階討論來修飾語感與用詞精準度。",
+        "C1": "太出色了！你有著近乎母語者的理解力。維持高水準的語言接觸，或是透過辯論與深度文學討論來保持語感靈敏度即可。"
+      };
+
+      return `
+        <div id="dynamic-learning-tips" style="background: rgba(255,255,255,0.06); border-left: 3px solid var(--gold); padding: 18px; border-radius: 8px; margin-bottom: 24px; text-align: left; border-top: 1px solid rgba(246,244,234,0.1); border-right: 1px solid rgba(246,244,234,0.1); border-bottom: 1px solid rgba(246,244,234,0.1);">
+          <h4 style="color: var(--gold); margin-bottom: 8px; font-family: var(--font-cjk); font-size: 1.1rem;">💡 艾瑞的專屬學習建議</h4>
+          <p style="color: var(--cream); font-size: 0.95rem; margin-bottom: 12px; line-height: 1.6;">${tipsMap[weakestCategory] || ''}</p>
+          <p style="color: var(--cream); font-size: 0.95rem; margin-bottom: 0; line-height: 1.6;">${levelAdvice[cefrLevel] || ''}</p>
+        </div>
+      `;
+    }
+
+    function renderResults() {
+      // 1. Calculate final CEFR Level based on last 6 answered levels
+      let last6 = difficultyHistory.slice(-6);
+      if (last6.length === 0) last6 = [0]; 
+      
+      let sum = last6.reduce((a, b) => a + b, 0);
+      let avg = sum / last6.length;
+      let finalIndex = Math.round(avg);
+      
+      let scoreBadge = document.getElementById('result-score');
+      let title = document.getElementById('result-title');
+      let desc = document.getElementById('result-desc');
+
+      if (finalIndex === 0) {
+        scoreBadge.innerText = "A1";
+        title.innerText = "入門德語 (Beginner)";
+        desc.innerText = "你具備基礎詞彙與基本句子結構的概念，建議從日常基礎會話開始累積！";
+      } else if (finalIndex === 1) {
+        scoreBadge.innerText = "A2";
+        title.innerText = "基礎德語 (Elementary)";
+        desc.innerText = "你已掌握基礎對話與基本時態，但在格位變化與複合句結構上還有提升空間。";
+      } else if (finalIndex === 2) {
+        scoreBadge.innerText = "B1";
+        title.innerText = "中級德語 (Intermediate)";
+        desc.innerText = "你能理解多數日常情境！加強進階語法，就能邁向流利溝通。";
+      } else if (finalIndex === 3) {
+        scoreBadge.innerText = "B2";
+        title.innerText = "中高級德語 (Vormittelstufe)";
+        desc.innerText = "德語能力良好，能理解複雜語法與篇章邏輯，適合精進深度對話！";
+      } else {
+        scoreBadge.innerText = "C1";
+        title.innerText = "高階德語 (Advanced)";
+        desc.innerText = "太厲害了！你對高階德文語法與長篇閱讀理解非常精準，具備近乎母語者的理解能力。";
+      }
+
+      // Calculate Category Strengths/Weaknesses
+      let categoryStats = {
+        grammar: { correct: 0, total: 0, name: '文法' },
+        vocab: { correct: 0, total: 0, name: '詞彙' },
+        reading: { correct: 0, total: 0, name: '閱讀' }
+      };
+      
+      let totalCorrect = 0;
+      let validQuestions = 0;
+
+      answeredQuestions.forEach(item => {
+        if (!item || !item.question) return;
+        validQuestions++;
+        let cat = item.question.category;
+        if (categoryStats[cat]) {
+          categoryStats[cat].total++;
+          if (item.userAns === item.question.correct) {
+            categoryStats[cat].correct++;
+            totalCorrect++;
+          }
+        }
+      });
+
+      let statsArray = Object.keys(categoryStats).map(key => {
+        let stat = categoryStats[key];
+        stat.key = key; // Keep key reference for lookup
+        stat.percent = stat.total > 0 ? (stat.correct / stat.total) : 0;
+        return stat;
+      });
+      
+      statsArray.sort((a, b) => b.percent - a.percent);
+      let strength = statsArray[0];
+      let weakness = statsArray[statsArray.length - 1];
+
+      // Remove existing stats summary / tips if rendering multiple times
+      let existingStats = document.getElementById('stats-summary');
+      if (existingStats) existingStats.remove();
+      let existingTips = document.getElementById('dynamic-learning-tips');
+      if (existingTips) existingTips.remove();
+
+      // Inject statistics summary
+      let summaryStatsHTML = `
+        <div id="stats-summary" style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: left; border: 1px solid rgba(246,244,234,0.1);">
+          <p style="color: var(--gold); margin-bottom: 12px; font-weight: bold; font-size: 1.1rem; font-family: var(--font-cjk);">🎯 總答對題數：${totalCorrect} / ${validQuestions}</p>
+          <p style="color: var(--cream); font-size: 0.95rem; margin-bottom: 6px;">💪 <strong>最強項目：</strong>${strength.name} (正確率 ${Math.round(strength.percent * 100)}%)</p>
+          <p style="color: var(--cream); font-size: 0.95rem; margin-bottom: 0;">⚠️ <strong>最弱項目：</strong>${weakness.name} (正確率 ${Math.round(weakness.percent * 100)}%)</p>
+        </div>
+      `;
+      desc.insertAdjacentHTML('afterend', summaryStatsHTML);
+
+      // Generate and insert personalized learning tips
+      let currentCefr = scoreBadge.innerText; 
+      let weakestKey = weakness.key; 
+      let tipsHTML = getPersonalizedTips(currentCefr, weakestKey);
+      
+      let statsElem = document.getElementById('stats-summary');
+      if (statsElem) {
+        statsElem.insertAdjacentHTML('afterend', tipsHTML);
+      }
+
+      // 2. Render Review Grid
+      let reviewList = document.getElementById('review-list');
+      reviewList.innerHTML = '<div class="review-grid" id="review-grid-container"></div>';
+      let gridContainer = document.getElementById('review-grid-container');
+
+      let sortedQuestions = [...answeredQuestions].sort((a, b) => {
+        if (!a.question || !b.question) return 0;
+        let catOrder = { grammar: 1, vocab: 2, reading: 3 };
+        return catOrder[a.question.category] - catOrder[b.question.category];
+      });
+
+      let currentCategory = "";
+
+      sortedQuestions.forEach((item) => {
+        if (!item || !item.question) return; 
+        let q = item.question;
+        let userAns = item.userAns;
+        let isCorrect = userAns === q.correct;
+        
+        let typeLabel = q.category === 'grammar' ? '📘 文法' : q.category === 'vocab' ? '📗 詞彙' : '📖 閱讀';
+
+        if (q.category !== currentCategory) {
+            let catHeader = document.createElement('h4');
+            catHeader.style.cssText = "grid-column: 1 / -1; color: var(--gold); border-bottom: 1px solid rgba(246,244,234,0.2); padding-bottom: 8px; margin-top: 24px; margin-bottom: 8px; font-size: 1.2rem; font-family: var(--font-cjk);";
+            catHeader.innerText = typeLabel + " 測驗區";
+            gridContainer.appendChild(catHeader);
+            currentCategory = q.category;
+        }
+
+        let originalIdx = answeredQuestions.indexOf(item);
+
+        let card = document.createElement('div');
+        card.className = `review-item ${isCorrect ? 'correct-border' : 'wrong-border'}`;
+
+        card.innerHTML = `
+          <div class="review-status">
+            <span class="${isCorrect ? 'tag-correct' : 'tag-wrong'}">
+              ${isCorrect ? '✓ 正確' : '✗ 錯誤'}
+            </span>
+            <span style="font-size: 0.85rem; color: rgba(246, 244, 234, 0.7);">難度: ${q.askedAtLevel}</span>
+          </div>
+          ${q.reading ? `<div class="review-reading"><strong>短文：</strong> ${q.reading}</div>` : ''}
+          <div class="review-q-text"><strong>第 ${originalIdx + 1} 題：</strong> ${q.text}</div>
+          <div class="review-ans-info">
+            <div>您的答案：<span class="${isCorrect ? 'text-correct' : 'text-wrong'}">${userAns !== null ? q.options[userAns] : '未作答'}</span></div>
+            ${!isCorrect ? `<div>正確答案：<span class="text-correct">${q.options[q.correct]}</span></div>` : ''}
+          </div>
+          <div class="review-explanation">
+            <strong>💡 解析：</strong> ${q.explanation}
+          </div>
+        `;
+        gridContainer.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
